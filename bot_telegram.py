@@ -9,7 +9,10 @@ async def on_startup_bot(bot:Bot):
 
 # Подключаем router
 dp.include_router(client.client_router)
+dp.include_router(admin.admin_router)
 dp.include_router(other.other_router)
+
+
 async def main():
     dp.startup.register(on_startup_bot)
 
