@@ -18,3 +18,8 @@ async def open_command(message):
 @client_router.message(Command(commands=['Расположение']))
 async def place_command(message):
     await message.answer('ул. Колбасная 15')
+
+
+@client_router.message(Command(commands=['Меню']))
+async def menu_command(message):
+    await message.answer('ул. Колбасная 15')

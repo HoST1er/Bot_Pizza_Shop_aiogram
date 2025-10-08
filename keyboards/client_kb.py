@@ -3,16 +3,19 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 b1 = KeyboardButton(text='/Режим_работы')
 b2 = KeyboardButton(text='/Расположение')
 b3 = KeyboardButton(text='/Меню')
-# b4 = KeyboardButton(text='/Поделиться_номером', request_contact=True)
-# b5 = KeyboardButton(text='/Отправить_где_я', request_location=True)
+b4 = KeyboardButton(text='/Поделиться_номером', request_contact=True)
+b5 = KeyboardButton(text='/Отправить_где_я', request_location=True)
 
 buttons = [
     [
         b1,
         b2,
         b3
+    ],
+    [
+        b4,
+        b5
     ]
-    #[b4, b5]
 ]
 
 kb_client = ReplyKeyboardMarkup(

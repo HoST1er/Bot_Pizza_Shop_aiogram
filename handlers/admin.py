@@ -5,6 +5,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters.state import StateFilter
 from create_bot import bot
+from data_base import sqllite_db
+from keyboards import admin_kb
 
 ID=None
 
@@ -29,7 +31,7 @@ async def make_changes_command(message, bot: Bot):
 
     global ID
     ID = message.from_user.id
-    await bot.send_message(ID, "Что хозяин надо???")
+    await bot.send_message(ID, "Что хозяин надо???", reply_markup=admin_kb.kb_admin)
     await message.delete()
 # --- Шаг 1: команда запуска ---
 @admin_router.message(Command("Загрузить"), StateFilter(None))
@@ -67,12 +69,13 @@ async def load_description(message, state: FSMContext):
 async def load_price(message, state: FSMContext):
     if message.from_user.id == ID:
         await state.update_data(price=message.text)
-        user_data = await state.get_data()
-        if user_data:
-            text = "\n".join(f"{key}: {value}" for key, value in user_data.items())
-            await message.answer(f"Текущие данные:\n{text}")
-        else:
-            await message.answer("Данных пока нет.")
+        # user_data = await state.get_data()
+        # if user_data:
+        #     text = "\n".join(f"{key}: {value}" for key, value in user_data.items())
+        #     await message.answer(f"Текущие данные:\n{text}")
+        # else:
+        #     await message.answer("Данных пока нет.")
+        await sqllite_db.sql_add_command(state)
         await state.clear()
 
 # --- Универсальный обработчик отмены ---

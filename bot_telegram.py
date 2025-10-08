@@ -3,9 +3,11 @@ import logging
 from aiogram import Bot
 from create_bot import dp, bot
 from handlers import client, other, admin
+from data_base import sqllite_db
 
 async def on_startup_bot(bot:Bot):
     print('Бот вышел в онлайн')
+    sqllite_db.sql_start()
 
 # Подключаем router
 dp.include_router(client.client_router)
