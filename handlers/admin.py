@@ -1,6 +1,4 @@
-import types
-
-from aiogram import Router, F, Bot
+from aiogram import Router, F, Bot, types
 from aiogram.enums import ChatMemberStatus
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -9,7 +7,7 @@ from aiogram.filters.state import StateFilter
 from create_bot import bot
 from data_base import sqllite_db
 from keyboards import admin_kb
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 ID=None
 
@@ -41,7 +39,7 @@ async def make_changes_command(message, bot: Bot):
 async def cm_start(message, state: FSMContext):
     if message.from_user.id == ID:
         await state.set_state(FSMAdmin.photo)
-        await message.reply("Загрузи фото")
+        await message.reply("Загрузи фото", reply_markup=admin_kb.cancel_kb)
 
 # --- Шаг 2: загрузка фото ---
 @admin_router.message(F.photo, StateFilter(FSMAdmin.photo))
@@ -49,7 +47,7 @@ async def load_photo(message, state: FSMContext):
     if message.from_user.id == ID:
         await state.update_data(photo=message.photo[0].file_id)
         await state.set_state(FSMAdmin.name)
-        await message.reply("Теперь введи название")
+        await message.reply("Теперь введи название", reply_markup=admin_kb.cancel_kb)
 
 # --- Шаг 3: название ---
 @admin_router.message(StateFilter(FSMAdmin.name))
@@ -57,7 +55,7 @@ async def load_name(message, state: FSMContext):
     if message.from_user.id == ID:
         await state.update_data(name=message.text)
         await state.set_state(FSMAdmin.description)
-        await message.reply("Теперь введи описание")
+        await message.reply("Теперь введи описание", reply_markup=admin_kb.cancel_kb)
 
 # --- Шаг 4: описание ---
 @admin_router.message(StateFilter(FSMAdmin.description))
@@ -65,7 +63,7 @@ async def load_description(message, state: FSMContext):
     if message.from_user.id == ID:
         await state.update_data(description=message.text)
         await state.set_state(FSMAdmin.price)
-        await message.reply("Теперь укажи цену")
+        await message.reply("Теперь укажи цену", reply_markup=admin_kb.cancel_kb)
 
 # --- Шаг 5: цена и вывод всех данных ---
 @admin_router.message(StateFilter(FSMAdmin.price))
@@ -76,15 +74,15 @@ async def load_price(message, state: FSMContext):
         await state.clear()
 
 # --- Универсальный обработчик отмены ---
-@admin_router.message(Command("Отмена"), StateFilter(FSMAdmin))
-async def cancel_fsm(message, state: FSMContext):
-    if message.from_user.id == ID:
+@admin_router.callback_query(F.data == "Отмена")
+async def cancel_fsm(callback: CallbackQuery, state: FSMContext):
+    if callback.from_user.id == ID:
         current_state = await state.get_state()
         if current_state is None:
-            await message.reply("FSM не активен, нечего отменять.")
+            await callback.message.answer("FSM не активен, нечего отменять.")
             return
         await state.clear()
-        await message.reply("Действие отменено. Выход из режима ввода.")
+        await callback.message.answer("Действие отменено. Выход из режима ввода.")
 
 
 @admin_router.callback_query(F.data.startswith('del '))
@@ -94,20 +92,28 @@ async def del_callback_run(callback_query: types.CallbackQuery):
     await callback_query.answer(text=f'{pizza_name} удалена.', show_alert=True)
 
 
-
-@admin_router.message(Command("Удалить"), StateFilter(FSMAdmin))
-async def delete_item(message, state: FSMContext):
+@admin_router.message(Command("Удалить"))
+async def delete_item(message):
     if message.from_user.id == ID:
         read = await sqllite_db.sql_read2()
+        if not read:
+            await message.answer("Меню пустое, нечего удалять.")
+            return
+
         for ret in read:
+            #img, name, desc, price = ret
             await bot.send_photo(
                 chat_id=message.from_user.id,
                 photo=ret[0],
                 caption=f"{ret[1]}\nОписание: {ret[2]}\nЦена: {ret[3]}"
             )
+            reply_markup = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text=f'Удалить {ret[1]}', callback_data=f'del {ret[1]}')]
+                ]
+            )
             await bot.send_message(
                 chat_id=message.from_user.id,
                 text='^^^',
-                reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton(f'Удалить {ret[1]}',\
-                                                                             callback_data=f'del {ret[1]}'))
+                reply_markup=reply_markup
             )
