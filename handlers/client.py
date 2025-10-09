@@ -1,6 +1,7 @@
 from aiogram import types, Dispatcher, Router
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardRemove
+from data_base import sqllite_db
 
 from create_bot import dp, bot
 from keyboards import kb_client
@@ -9,6 +10,10 @@ client_router = Router()
 
 @client_router.message(Command(commands=['start', 'help']))
 async def command_start(message):
+    if message.chat.type != 'private':
+        await message.answer('Бот работает только в личных сообщениях. Напишите мне в личку!')
+        return
+
     await message.answer('Привет! Это пиццерия', reply_markup=kb_client)
 
 @client_router.message(Command(commands=['Режим_работы']))
@@ -22,4 +27,4 @@ async def place_command(message):
 
 @client_router.message(Command(commands=['Меню']))
 async def menu_command(message):
-    await message.answer('ул. Колбасная 15')
+    await sqllite_db.sql_read(message)

@@ -69,12 +69,6 @@ async def load_description(message, state: FSMContext):
 async def load_price(message, state: FSMContext):
     if message.from_user.id == ID:
         await state.update_data(price=message.text)
-        # user_data = await state.get_data()
-        # if user_data:
-        #     text = "\n".join(f"{key}: {value}" for key, value in user_data.items())
-        #     await message.answer(f"Текущие данные:\n{text}")
-        # else:
-        #     await message.answer("Данных пока нет.")
         await sqllite_db.sql_add_command(state)
         await state.clear()
 

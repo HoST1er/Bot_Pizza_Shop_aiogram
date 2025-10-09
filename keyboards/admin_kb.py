@@ -1,7 +1,7 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 button_load = KeyboardButton(text = '/Загрузить')
-button_delete = KeyboardButton(text = '/Удалить')
+button_delete = KeyboardButton(text = '/Отмена')
 
 
 button_case_admin = [
