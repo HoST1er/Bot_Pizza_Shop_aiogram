@@ -1,3 +1,5 @@
+import types
+
 from aiogram import Router, F, Bot
 from aiogram.enums import ChatMemberStatus
 from aiogram.filters import Command
@@ -7,6 +9,7 @@ from aiogram.filters.state import StateFilter
 from create_bot import bot
 from data_base import sqllite_db
 from keyboards import admin_kb
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 ID=None
 
@@ -82,3 +85,29 @@ async def cancel_fsm(message, state: FSMContext):
             return
         await state.clear()
         await message.reply("Действие отменено. Выход из режима ввода.")
+
+
+@admin_router.callback_query(F.data.startswith('del '))
+async def del_callback_run(callback_query: types.CallbackQuery):
+    pizza_name = callback_query.data.replace('del ', '')
+    await sqllite_db.sql_delete_command(pizza_name)
+    await callback_query.answer(text=f'{pizza_name} удалена.', show_alert=True)
+
+
+
+@admin_router.message(Command("Удалить"), StateFilter(FSMAdmin))
+async def delete_item(message, state: FSMContext):
+    if message.from_user.id == ID:
+        read = await sqllite_db.sql_read2()
+        for ret in read:
+            await bot.send_photo(
+                chat_id=message.from_user.id,
+                photo=ret[0],
+                caption=f"{ret[1]}\nОписание: {ret[2]}\nЦена: {ret[3]}"
+            )
+            await bot.send_message(
+                chat_id=message.from_user.id,
+                text='^^^',
+                reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton(f'Удалить {ret[1]}',\
+                                                                             callback_data=f'del {ret[1]}'))
+            )
